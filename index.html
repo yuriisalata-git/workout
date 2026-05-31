@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Gym">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" id="manifest-ph">
+<title>Тренування</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0a0a0a;--card:#141414;--raised:#1c1c1c;--border:#2a2a2a;
+    --text:#f5f5f0;--dim:#888;--faint:#555;
+    --accent:#d4ff3a;--adim:#8aa820;--done:#3a3a3a;--dtext:#555;
+    --alt:#4a9eff;--log:#ff9f43;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;overflow-x:hidden;min-height:100vh}
+  body{background:radial-gradient(ellipse at top,rgba(212,255,58,.04) 0%,transparent 50%),var(--bg);padding-bottom:80px}
+
+  /* HEADER */
+  .hdr{padding:18px 20px 13px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.96);backdrop-filter:blur(20px);z-index:100}
+  .hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1}
+  .logo span{color:var(--accent)}
+  .hdr-btns{display:flex;gap:7px}
+  .hbtn{background:var(--raised);border:1px solid var(--border);color:var(--dim);padding:7px 11px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:.07em;transition:all .2s;white-space:nowrap}
+  .hbtn:active{background:var(--accent);color:#000;border-color:var(--accent)}
+  .sched{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)}
+
+  /* TABS */
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:13px 20px;background:var(--bg);position:sticky;top:79px;z-index:99;border-bottom:1px solid var(--border)}
+  .tab{background:var(--card);border:1px solid var(--border);padding:12px 4px;border-radius:10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .tab-d{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--faint);letter-spacing:.15em;text-transform:uppercase;margin-bottom:3px}
+  .tab-n{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--text)}
+  .tab.on{background:var(--accent);border-color:var(--accent)}
+  .tab.on .tab-d,.tab.on .tab-n{color:#0a0a0a}
+  .tab-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--accent);transition:width .3s}
+
+  /* CONTENT */
+  .pg{padding:16px;max-width:600px;margin:0 auto}
+  .wh{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .wt{font-family:'Bebas Neue',sans-serif;font-size:38px;line-height:.9}
+  .wt .n{color:var(--accent);font-size:24px;display:block;margin-bottom:-4px}
+  .ws{text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+  .ws .c{font-size:22px;color:var(--accent);display:block;font-weight:700}
+  .ftag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);background:rgba(212,255,58,.1);border:1px solid var(--adim);padding:3px 9px;border-radius:4px;text-transform:uppercase;margin-bottom:14px}
+  .hint{background:rgba(212,255,58,.06);border:1px solid rgba(212,255,58,.2);padding:9px 12px;border-radius:8px;margin-bottom:14px;font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace;text-align:center}
+
+  /* EXERCISE */
+  .ex{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all .25s;animation:si .3s ease backwards}
+  .ex.done{background:var(--bg);border-color:var(--done);opacity:.5}
+  .ex.done .ex-n{text-decoration:line-through;color:var(--dtext)}
+  .ex.pri{border-left:3px solid var(--accent)}
+  .ex:nth-child(2){animation-delay:.04s}.ex:nth-child(3){animation-delay:.08s}.ex:nth-child(4){animation-delay:.12s}.ex:nth-child(5){animation-delay:.16s}.ex:nth-child(6){animation-delay:.2s}.ex:nth-child(7){animation-delay:.24s}.ex:nth-child(8){animation-delay:.28s}
+
+  .ex-row{display:flex;align-items:center;padding:14px;cursor:pointer;gap:12px}
+  .ex-num{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--faint);width:22px;flex-shrink:0;text-align:center}
+  .ex.done .ex-num{color:var(--dtext)}
+  .ex-info{flex:1;min-width:0}
+  .ex-n{font-size:14px;font-weight:600;line-height:1.3;margin-bottom:4px}
+  .ex-r2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ex-sets{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700}
+  .ex-last{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--log);background:rgba(255,159,67,.1);padding:1px 6px;border-radius:3px}
+  .ab{background:rgba(74,158,255,.12);color:var(--alt);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:9px}
+  .ck{width:28px;height:28px;border-radius:8px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;background:var(--raised)}
+  .ex.done .ck{background:var(--accent);border-color:var(--accent)}
+  .ck::after{content:'';width:12px;height:7px;border-left:2px solid #0a0a0a;border-bottom:2px solid #0a0a0a;transform:rotate(-45deg) translate(2px,-2px);opacity:0;transition:opacity .2s}
+  .ex.done .ck::after{opacity:1}
+
+  /* DETAILS */
+  .ex-det{max-height:0;overflow:hidden;transition:max-height .4s ease}
+  .ex.open .ex-det{max-height:3000px}
+  .ex-det-in{padding:12px 14px 16px 48px;border-top:1px solid var(--border)}
+
+  /* GIF */
+  .gif-wrap{margin-bottom:12px;border-radius:8px;overflow:hidden;background:var(--raised);border:1px solid var(--border);position:relative;min-height:160px;display:flex;align-items:center;justify-content:center}
+  .gif-wrap img{width:100%;display:block;border-radius:7px}
+  .gif-loading{position:absolute;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint)}
+  .gif-err{padding:20px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);line-height:1.6}
+
+  /* VIDEO BTN */
+  .vbtn{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#ff0000,#cc0000);color:#fff;text-decoration:none;padding:11px 14px;border-radius:8px;font-weight:600;font-size:13px;margin-bottom:12px;box-shadow:0 4px 12px rgba(255,0,0,.2)}
+  .vico{width:30px;height:20px;background:#fff;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .vico::after{content:'';width:0;height:0;border-left:8px solid #ff0000;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
+  .vtxt{flex:1;line-height:1.2}
+  .vsub{font-size:9px;opacity:.8;font-family:'JetBrains Mono',monospace;margin-top:2px;text-transform:uppercase}
+
+  .trow{font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:8px}
+  .trow strong{color:var(--text);font-weight:600}
+  .tip{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:rgba(212,255,58,.06);padding:7px 10px;border-radius:6px;margin-bottom:14px;line-height:1.5}
+
+  /* LOG */
+  .log-s{margin-bottom:14px}
+  .log-t{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--log);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .log-t::before{content:'📋';font-size:12px}
+  .log-in{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end}
+  .lf{display:flex;flex-direction:column;gap:4px}
+  .ll{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase}
+  .li{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:14px;width:100%;-webkit-appearance:none;outline:none;text-align:center}
+  .li:focus{border-color:var(--log)}
+  .ls{background:var(--log);color:#000;border:none;padding:8px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;height:36px;white-space:nowrap}
+  .lh{background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lhh{display:grid;grid-template-columns:70px 1fr 1fr 1fr;padding:6px 10px;border-bottom:1px solid var(--border)}
+  .lhh span{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+  .lhh span:first-child{text-align:left}
+  .lr{display:grid;grid-template-columns:70px 1fr 1fr 1fr;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+  .lr:last-child{border-bottom:none}
+  .ld{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint)}
+  .lv{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);text-align:center}
+  .lv.best{color:var(--accent);font-weight:700}
+  .lv.up{color:#2ecc71}.lv.dn{color:#e74c3c}
+  .le{padding:12px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);text-align:center}
+
+  /* ALT */
+  .alt-s{padding-top:12px;border-top:1px dashed var(--border)}
+  .alt-t{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--alt);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .alt-t::before{content:'⇄';font-size:14px}
+  .ai{background:var(--raised);border:1px solid var(--border);border-left:2px solid var(--alt);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+  .ai:last-child{margin-bottom:0}
+  .ai-n{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+  .ai-r{font-size:11px;color:var(--dim);line-height:1.4;margin-bottom:7px}
+  .ai-v{display:inline-flex;align-items:center;gap:6px;background:rgba(255,0,0,.12);color:#ff5555;text-decoration:none;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'JetBrains Mono',monospace}
+  .ai-v::before{content:'▶';font-size:9px}
+
+  /* RULES */
+  .rules{margin-top:28px;padding:18px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
+  .rt{font-family:'Bebas Neue',sans-serif;font-size:22px;margin-bottom:12px}
+  .rt span{color:var(--accent)}
+  .ru{display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.5;color:var(--dim)}
+  .ru:last-child{margin-bottom:0}
+  .rn{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;flex-shrink:0;font-size:11px;padding-top:1px}
+  .ru strong{color:var(--text)}
+  .tgts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0}
+  .tg{background:var(--card);border:1px solid var(--border);padding:10px 8px;border-radius:8px;text-align:center}
+  .tg-l{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .tg-v{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent)}
+  .tg-c{font-size:9px;color:var(--dim);margin-top:2px}
+
+  .rst{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--border);color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px 14px;border-radius:8px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;z-index:50}
+  .rst:active{background:var(--accent);color:#0a0a0a;border-color:var(--accent)}
+
+  /* QR MODAL */
+  .mo{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .mo.on{display:flex}
+  .mb{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center}
+  .mt{font-family:'Bebas Neue',sans-serif;font-size:26px;margin-bottom:4px}
+  .mt span{color:var(--accent)}
+  .ms{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-bottom:18px}
+  #qrc{display:flex;justify-content:center;margin-bottom:16px}
+  #qrc canvas,#qrc img{border-radius:8px;border:4px solid #fff}
+  .mst{background:var(--raised);border-radius:8px;padding:12px 14px;margin-bottom:16px;text-align:left}
+  .mst p{font-size:12px;color:var(--dim);padding:3px 0;line-height:1.5}
+  .mst p strong{color:var(--text)}
+  .mc{background:var(--accent);color:#000;border:none;width:100%;padding:12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer}
+
+  @keyframes si{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">UPPER<span>/</span>LOWER</div>
+    <div class="hdr-btns">
+      <button class="hbtn" id="inst-btn" style="display:none" onclick="installApp()">+ ДОДАТИ</button>
+      <button class="hbtn" onclick="openQR()">QR</button>
+    </div>
+  </div>
+  <div class="sched">ПН · ВТ · ЧТ · ПТ — кожна група 2× на тиждень</div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="pg" id="pg"></div>
+<button class="rst" onclick="resetDay()">Скинути день</button>
+
+<div class="mo" id="qrm" onclick="if(event.target===this)closeQR()">
+  <div class="mb">
+    <div class="mt">ВІДКРИТИ <span>НА ТЕЛЕФОНІ</span></div>
+    <div class="ms">СКАНУЙ КАМЕРОЮ</div>
+    <div id="qrc"></div>
+    <div class="mst">
+      <p><strong>iPhone Safari:</strong> Поділитися → "На початковий екран"</p>
+      <p><strong>Android Chrome:</strong> Меню ⋮ → "Додати на головний екран"</p>
+    </div>
+    <button class="mc" onclick="closeQR()">ЗАКРИТИ</button>
+  </div>
+</div>
+
+<script>
+const CDN = 'https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/version-1.2.0';
+const gif = (muscle, slug) => `${CDN}/${muscle}/${slug}.gif`;
+const yt = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+
+const W = {
+  upperA:{day:'ПН',num:'01',name:'UPPER A',focus:'ГРУДИ · СПИНА · ПЛЕЧІ',exercises:[
+    {name:'Жим штанги на похилій лаві 30°',sets:'4×6-8',pri:true,gif:gif('pectorals','barbell-incline-bench-press'),video:yt('incline barbell bench press'),tech:'Лава 30°, опускати до верху грудей, лікті 45° від тіла.',tip:'Головна вправа на верх грудей',alts:[{name:'Жим гантелей на похилій лаві',reason:'Штанга зайнята. Більша амплітуда.',video:yt('incline dumbbell press'),gif:gif('pectorals','dumbbell-incline-bench-press')},{name:'Жим у Сміті на похилій лаві',reason:'Без партнера для страховки.',video:yt('smith machine incline press'),gif:gif('pectorals','smith-incline-bench-press')}]},
+    {name:'Підтягування широким хватом',sets:'4×8-10',pri:true,gif:gif('lats','wide-grip-pull-up'),video:yt('wide grip pull ups'),tech:'Менше 8 повторів — тяга верхнього блока широким хватом.',tip:'База для широкої спини',alts:[{name:'Тяга верхнього блока широким хватом',reason:'Менше 8 підтягувань.',video:yt('wide grip lat pulldown'),gif:gif('lats','cable-bar-lateral-pulldown')},{name:'Підтягування з гумкою',reason:'Перехідний варіант.',video:yt('assisted pull ups band'),gif:gif('lats','assisted-pull-up')}]},
+    {name:'Жим гантелей сидячи',sets:'3×8-10',gif:gif('delts','dumbbell-seated-shoulder-press'),video:yt('seated dumbbell shoulder press'),tech:'Спина до лави, опускати до рівня вух.',tip:'Без інерції корпусу',alts:[{name:'Жим у тренажері',reason:'Немає вільної лави.',video:yt('machine shoulder press'),gif:gif('delts','lever-shoulder-press')},{name:'Армійський жим стоячи',reason:'Більше включає кор.',video:yt('overhead press standing'),gif:gif('delts','barbell-seated-overhead-press')}]},
+    {name:'Тяга штанги в нахилі',sets:'3×8-10',gif:gif('upper-back','barbell-bent-over-row'),video:yt('barbell bent over row'),tech:'Корпус 45°, тягни до живота, зводь лопатки.',tip:'Спина пряма > вага',alts:[{name:'Тяга гантелі однією рукою',reason:'Болить поперек.',video:yt('one arm dumbbell row'),gif:gif('upper-back','dumbbell-one-arm-bent-over-row')},{name:'Тяга горизонтальна на блоці',reason:'Штанга зайнята.',video:yt('seated cable row'),gif:gif('upper-back','cable-seated-row')}]},
+    {name:'Розведення гантелей стоячи',sets:'4×12-15',pri:true,gif:gif('delts','dumbbell-lateral-raise'),video:yt('dumbbell lateral raises'),tech:'Лікті трохи зігнуті, до рівня плечей.',tip:'Критично для ширини. Чиста техніка',alts:[{name:'Махи на блоці однією рукою',reason:'Постійна напруга.',video:yt('cable lateral raise'),gif:gif('delts','cable-one-arm-lateral-raise')},{name:'Тренажер Lateral Raise',reason:'Фіксована траєкторія.',video:yt('lateral raise machine'),gif:gif('delts','lever-lateral-raise')}]},
+    {name:'Біцепс зі штангою',sets:'3×8-10',gif:gif('biceps','barbell-curl'),video:yt('barbell biceps curl'),tech:'Лікті притиснуті до боків, без розгойдування.',tip:'2 сек вниз',alts:[{name:'Згинання з гантелями',reason:'Штанга зайнята.',video:yt('dumbbell biceps curl'),gif:gif('biceps','dumbbell-biceps-curl')},{name:'Згинання на блоці',reason:'Постійна напруга.',video:yt('cable biceps curl'),gif:gif('biceps','cable-curl')}]},
+    {name:'Французький жим лежачи',sets:'3×10',gif:gif('triceps','barbell-lying-triceps-extension-skull-crusher'),video:yt('skull crushers triceps'),tech:'EZ-штанга, до лоба, лікті фіксовані.',tip:'',alts:[{name:'Розгинання на блоці канатом',reason:'Болять лікті.',video:yt('triceps rope pushdown'),gif:gif('triceps','cable-pushdown-with-rope-attachment')},{name:'Французький жим з гантелями',reason:'Альтернативний кут.',video:yt('overhead dumbbell triceps'),gif:gif('triceps','dumbbell-lying-triceps-extension')}]}
+  ]},
+  lowerA:{day:'ВТ',num:'02',name:'LOWER A',focus:'НОГИ · ПРЕС',exercises:[
+    {name:'Присідання зі штангою',sets:'4×6-8',pri:true,gif:gif('quads','barbell-wide-squat'),video:yt('barbell back squat'),tech:'Штанга на трапеції, ноги на ширині плечей, до паралелі.',tip:'Глибина > вага',alts:[{name:'Присідання у Сміті',reason:'Стійка зайнята.',video:yt('smith machine squat'),gif:gif('quads','smith-chair-squat')},{name:'Goblet squat з гантеллю',reason:'Болить плече.',video:yt('goblet squat'),gif:gif('quads','dumbbell-goblet-squat')}]},
+    {name:'Румунська тяга',sets:'3×8-10',pri:true,gif:gif('hamstrings','barbell-straight-leg-deadlift'),video:yt('romanian deadlift'),tech:'Ноги майже прямі, тазом назад, штанга вздовж ніг.',tip:'Задня поверхня і сідниці',alts:[{name:'Румунська тяга з гантелями',reason:'Штанга зайнята.',video:yt('romanian deadlift dumbbells'),gif:gif('hamstrings','dumbbell-lying-femoral')},{name:'Тяга з гумкою на прямих',reason:'Безпечніше для спини.',video:yt('band straight leg deadlift'),gif:gif('hamstrings','band-straight-leg-deadlift')}]},
+    {name:'Жим ногами',sets:'3×10-12',gif:gif('quads','lever-alternate-leg-press'),video:yt('leg press technique'),tech:'Ноги на ширині плечей по центру платформи.',tip:'Не випрямляй коліна до кінця',alts:[{name:'Гак-присід',reason:'Жим зайнятий.',video:yt('hack squat machine'),gif:gif('quads','barbell-bench-front-squat')},{name:'Болгарські випади',reason:'Без тренажера.',video:yt('bulgarian split squat'),gif:gif('quads','dumbbell-single-leg-split-squat')}]},
+    {name:'Випади з гантелями',sets:'3×10 на ногу',gif:gif('quads','dumbbell-step-up-lunge'),video:yt('dumbbell walking lunges'),tech:'Крок вперед, заднє коліно майже до підлоги.',tip:'',alts:[{name:'Зворотні випади',reason:'Менше навантаження на коліна.',video:yt('reverse lunges'),gif:gif('quads','barbell-one-leg-squat')},{name:'Split squat',reason:'Мало місця для ходьби.',video:yt('split squat'),gif:gif('quads','split-squats')}]},
+    {name:'Підйом на носки',sets:'4×12-15',gif:gif('calves','barbell-standing-calf-raise'),video:yt('standing calf raises'),tech:'У тренажері або з гантелями, повна амплітуда.',tip:'',alts:[{name:'Підйом на носки сидячи',reason:'Інший пучок.',video:yt('seated calf raises'),gif:gif('calves','barbell-seated-calf-raise')},{name:'На жимі ногами',reason:'Немає окремого тренажера.',video:yt('leg press calf raise'),gif:gif('calves','lever-seated-calf-press')}]},
+    {name:'Планка',sets:'3×60 сек',gif:gif('abs','weighted-front-plank'),video:yt('plank exercise form'),tech:'Тіло пряма лінія, таз не провисає.',tip:'',alts:[{name:'Бокова планка',reason:'Більше косі м\'язи.',video:yt('side plank'),gif:gif('abs','side-bridge-v-2')},{name:'Hollow body hold',reason:'Планка вже легка.',video:yt('hollow body hold'),gif:gif('abs','tuck-crunch')}]},
+    {name:'Скручування на блоці',sets:'3×15',gif:gif('abs','cable-kneeling-crunch'),video:yt('cable crunches'),tech:'На колінах, ліктями до стегон, округляй спину.',tip:'Опір > витривалість',alts:[{name:'Підйоми ніг у висі',reason:'Блок зайнятий.',video:yt('hanging leg raises'),gif:gif('abs','hanging-leg-raise')},{name:'Тренажер для пресу',reason:'Регульована вага.',video:yt('ab crunch machine'),gif:gif('abs','lever-seated-crunch')}]}
+  ]},
+  upperB:{day:'ЧТ',num:'03',name:'UPPER B',focus:'СПИНА В ШИРИНУ · ЗАДНЯ ДЕЛЬТА',exercises:[
+    {name:'Жим гантелей на горизонтальній лаві',sets:'4×8-10',pri:true,gif:gif('pectorals','dumbbell-bench-press'),video:yt('flat dumbbell bench press'),tech:'Більша амплітуда ніж штанга. Опускати на рівні грудей.',tip:'',alts:[{name:'Жим штанги лежачи',reason:'Немає важких гантелей.',video:yt('barbell bench press'),gif:gif('pectorals','barbell-bench-press')},{name:'Chest press machine',reason:'Лава зайнята.',video:yt('chest press machine'),gif:gif('pectorals','lever-chest-press')}]},
+    {name:'Тяга T-грифа',sets:'4×8-10',pri:true,gif:gif('upper-back','lever-t-bar-row'),video:yt('t bar row'),tech:'Спина пряма, до живота, зводь лопатки.',tip:'Товщина спини',alts:[{name:'Горизонтальна тяга на блоці',reason:'T-гриф зайнятий.',video:yt('seated cable row'),gif:gif('upper-back','cable-low-seated-row')},{name:'Тяга з упором у груди',reason:'Без навантаження на поперек.',video:yt('chest supported row'),gif:gif('upper-back','lever-high-row')}]},
+    {name:'Жим Арнольда',sets:'3×10',gif:gif('delts','dumbbell-arnold-press'),video:yt('arnold press'),tech:'Старт долонями до себе, при підйомі розвертай.',tip:'Всі три пучки дельти',alts:[{name:'Жим гантелей сидячи',reason:'Незручний поворот.',video:yt('seated dumbbell press'),gif:gif('delts','dumbbell-seated-shoulder-press')},{name:'Жим у тренажері',reason:'Простіша техніка.',video:yt('shoulder press machine'),gif:gif('delts','lever-shoulder-press')}]},
+    {name:'Тяга верхнього блока вузьким хватом',sets:'3×10',gif:gif('lats','cable-pulldown'),video:yt('close grip lat pulldown'),tech:'Паралельний хват, до грудей, лікті вниз і назад.',tip:'',alts:[{name:'Підтягування зворотним хватом',reason:'Без тренажера.',video:yt('chin ups'),gif:gif('lats','chin-up')},{name:'Тяга зворотним хватом',reason:'Більше біцепс.',video:yt('underhand lat pulldown'),gif:gif('lats','cable-underhand-pulldown')}]},
+    {name:'Махи в нахилі (задня дельта)',sets:'4×12-15',pri:true,gif:gif('delts','dumbbell-rear-lateral-raise'),video:yt('bent over rear delt fly'),tech:'Корпус паралельно підлозі, розводь у сторони.',tip:'КРИТИЧНО для постави',alts:[{name:'Reverse pec deck',reason:'Краща ізоляція.',video:yt('reverse pec deck'),gif:gif('delts','lever-seated-reverse-fly')},{name:'Face pull на блоці',reason:'Також ротатори плеча.',video:yt('face pull cable'),gif:gif('delts','cable-rear-delt-row-with-rope')}]},
+    {name:'Молоткові згинання',sets:'3×10',gif:gif('biceps','dumbbell-hammer-curl'),video:yt('hammer curls'),tech:'Паралельний хват, лікті фіксовані.',tip:'',alts:[{name:'Канат на нижньому блоці',reason:'Постійна напруга.',video:yt('cable hammer curls'),gif:gif('biceps','cable-hammer-curl-with-rope')},{name:'Лава Скотта',reason:'Акцент пік біцепса.',video:yt('preacher curl'),gif:gif('biceps','barbell-preacher-curl')}]},
+    {name:'Розгинання на блоці канатом',sets:'3×12',gif:gif('triceps','cable-pushdown-with-rope-attachment'),video:yt('triceps rope pushdown'),tech:'Канатна рукоять, у нижній точці розводь руки.',tip:'',alts:[{name:'Пряма рукоять',reason:'Канат зайнятий.',video:yt('triceps pushdown bar'),gif:gif('triceps','cable-pushdown')},{name:'Віджимання на брусах',reason:'Більше базове навантаження.',video:yt('dips triceps'),gif:gif('triceps','triceps-dip')}]}
+  ]},
+  lowerB:{day:'ПТ',num:'04',name:'LOWER B',focus:'НОГИ · ПОПЕРЕК · ПРЕС',exercises:[
+    {name:'Станова тяга',sets:'3×5',pri:true,gif:gif('upper-back','barbell-bent-over-row'),video:yt('conventional deadlift technique'),tech:'Спина пряма, штанга вздовж ніг, плечі назад.',tip:'Техніка > вага',alts:[{name:'Сумо-тяга',reason:'Погана рухливість стегна.',video:yt('sumo deadlift'),gif:gif('hamstrings','barbell-good-morning')},{name:'Good morning',reason:'Немає місця для тяги.',video:yt('good morning barbell'),gif:gif('hamstrings','barbell-good-morning')}]},
+    {name:'Болгарські випади',sets:'3×10 на ногу',gif:gif('quads','dumbbell-single-leg-split-squat'),video:yt('bulgarian split squat'),tech:'Задня нога на лаві, вертикально вниз.',tip:'',alts:[{name:'Split squat',reason:'Складно тримати рівновагу.',video:yt('split squat'),gif:gif('quads','split-squats')},{name:'Випади з гантелями',reason:'Лава зайнята.',video:yt('dumbbell lunges'),gif:gif('quads','dumbbell-step-up-lunge')}]},
+    {name:'Згинання ніг лежачи',sets:'3×12',gif:gif('hamstrings','lever-lying-leg-curl'),video:yt('lying leg curl'),tech:'Повна амплітуда, контроль на опусканні.',tip:'',alts:[{name:'Згинання ніг сидячи',reason:'Тренажер лежачи зайнятий.',video:yt('seated leg curl'),gif:gif('hamstrings','lever-seated-leg-curl')},{name:'Glute ham raise',reason:'Без тренажера.',video:yt('nordic hamstring curl'),gif:gif('hamstrings','glute-ham-raise')}]},
+    {name:'Гак-присід',sets:'3×12',gif:gif('quads','lever-leg-extension'),video:yt('hack squat machine'),tech:'Ноги вузько по центру — акцент квадрицепс.',tip:'',alts:[{name:'Розгинання ніг',reason:'Чиста ізоляція квадрицепса.',video:yt('leg extension machine'),gif:gif('quads','lever-leg-extension')},{name:'Жим ногами вузька постановка',reason:'Машина зайнята.',video:yt('leg press narrow quads'),gif:gif('quads','lever-alternate-leg-press')}]},
+    {name:'Гіперекстензія',sets:'3×15',gif:gif('spine','hyperextension'),video:yt('back extension hyperextension'),tech:'З блином 5-10 кг, не перерозгинай поперек.',tip:'Важливо для постави',alts:[{name:'Good morning зі штангою',reason:'Немає тренажера.',video:yt('good morning barbell'),gif:gif('hamstrings','barbell-good-morning')},{name:'Back extension на м\'ячі',reason:'М\'якший варіант.',video:yt('exercise ball back extension'),gif:gif('spine','exercise-ball-back-extension-with-arms-extended')}]},
+    {name:'Колесо для пресу',sets:'3×10-15',gif:gif('abs','wheel-rollerout'),video:yt('ab wheel rollout'),tech:'З колін, не прогинай поперек.',tip:'Якщо складно — заміни',alts:[{name:'Підйоми ніг у висі',reason:'Немає колеса.',video:yt('hanging leg raises'),gif:gif('abs','hanging-leg-raise')},{name:'Скручування на блоці',reason:'Більше контролю.',video:yt('cable crunches'),gif:gif('abs','cable-kneeling-crunch')}]}
+  ]}
+};
+
+const ORDER = ['upperA','lowerA','upperB','lowerB'];
+let active = 'upperA';
+
+// STORAGE
+const gDone = k => { try{const r=localStorage.getItem('d_'+k);return r?new Set(JSON.parse(r)):new Set();}catch{return new Set();} };
+const sDone = (k,s) => { try{localStorage.setItem('d_'+k,JSON.stringify([...s]));}catch{} };
+const gLog = (w,i) => { try{const r=localStorage.getItem(`l_${w}_${i}`);return r?JSON.parse(r):[];}catch{return[];} };
+const sLog = (w,i,l) => { try{localStorage.setItem(`l_${w}_${i}`,JSON.stringify(l));}catch{} };
+const lastLog = (w,i) => { const l=gLog(w,i); return l.length?l[l.length-1]:null; };
+
+function saveLog(w,i){
+  const kg=document.getElementById(`kg_${i}`)?.value;
+  const rp=document.getElementById(`rp_${i}`)?.value;
+  if(!kg&&!rp)return;
+  const logs=gLog(w,i);
+  logs.push({date:new Date().toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit'}),kg:kg||'-',reps:rp||'-'});
+  if(logs.length>10)logs.shift();
+  sLog(w,i,logs);
+  document.getElementById(`kg_${i}`).value='';
+  document.getElementById(`rp_${i}`).value='';
+  renderPg();
+  setTimeout(()=>{const el=document.querySelector(`.ex[data-i="${i}"]`);if(el)el.classList.add('open');},50);
+}
+
+function logHTML(w,i){
+  const logs=gLog(w,i);
+  const hist=logs.length?`
+    <div class="lh">
+      <div class="lhh"><span>ДАТА</span><span>КГ</span><span>ПОВТ</span><span>±</span></div>
+      ${logs.slice().reverse().map((l,idx,arr)=>{
+        const prev=idx<arr.length-1?parseFloat(arr[idx+1].kg):null;
+        const cur=parseFloat(l.kg);
+        const best=Math.max(...logs.map(x=>parseFloat(x.kg)||0));
+        const isB=!isNaN(cur)&&cur===best;
+        let delta='<span class="lv">—</span>';
+        if(prev&&!isNaN(cur)){const d=cur-prev;delta=d>0?`<span class="lv up">+${d}</span>`:d<0?`<span class="lv dn">${d}</span>`:'<span class="lv">0</span>';}
+        return `<div class="lr"><span class="ld">${l.date}</span><span class="lv ${isB?'best':''}">${l.kg}</span><span class="lv">${l.reps}</span>${delta}</div>`;
+      }).join('')}
+    </div>` : `<div class="lh"><div class="le">Ще немає записів</div></div>`;
+  return `<div class="log-s">
+    <div class="log-t">Журнал</div>
+    <div class="log-in">
+      <div class="lf"><span class="ll">КГ</span><input type="number" class="li" id="kg_${i}" placeholder="0" inputmode="decimal" step="0.5"></div>
+      <div class="lf"><span class="ll">ПОВТОРИ</span><input type="number" class="li" id="rp_${i}" placeholder="0" inputmode="numeric"></div>
+      <button class="ls" onclick="saveLog('${w}',${i})">ЗБЕРЕГТИ</button>
+    </div>${hist}</div>`;
+}
+
+// RENDER
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=ORDER.map(k=>{
+    const w=W[k],done=gDone(k),pct=w.exercises.length?(done.size/w.exercises.length)*100:0,isA=k===active;
+    return `<div class="tab ${isA?'on':''}" onclick="sw('${k}')"><div class="tab-d">${w.day}</div><div class="tab-n">${w.num}</div>${!isA?`<div class="tab-bar" style="width:${pct}%"></div>`:''}</div>`;
+  }).join('');
+}
+
+function renderPg(){
+  const w=W[active],done=gDone(active);
+  document.getElementById('pg').innerHTML=`
+    <div class="wh">
+      <div class="wt"><span class="n">${w.day} · ${w.num}</span>${w.name}</div>
+      <div class="ws"><span class="c">${done.size}/${w.exercises.length}</span>ВПРАВ</div>
+    </div>
+    <div class="ftag">${w.focus}</div>
+    <div class="hint">→ ТАПНИ ВПРАВУ — GIF · ЖУРНАЛ · АЛЬТЕРНАТИВИ</div>
+    ${w.exercises.map((ex,i)=>{
+      const last=lastLog(active,i);
+      const lt=last?`<span class="ex-last">↑ ${last.kg}кг×${last.reps}</span>`:'';
+      return `<div class="ex ${done.has(i)?'done':''} ${ex.pri?'pri':''}" data-i="${i}">
+        <div class="ex-row" onclick="toggle(${i},event)">
+          <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="ex-info">
+            <div class="ex-n">${ex.name}</div>
+            <div class="ex-r2"><span class="ex-sets">${ex.sets}</span>${lt}<span class="ab">${ex.alts.length} АЛЬТ</span></div>
+          </div>
+          <div class="ck" onclick="chk(${i},event)"></div>
+        </div>
+        <div class="ex-det"><div class="ex-det-in">
+          <div class="gif-wrap">
+            <span class="gif-loading">завантаження...</span>
+            <img src="${ex.gif}" alt="${ex.name}" loading="lazy"
+              onload="this.previousElementSibling.style.display='none'"
+              onerror="this.style.display='none';this.previousElementSibling.innerHTML='Зображення недоступне.<br>Відкрий відео нижче.'">
+          </div>
+          <a href="${ex.video}" target="_blank" rel="noopener" class="vbtn">
+            <div class="vico"></div>
+            <div class="vtxt">Відео на YouTube<div class="vsub">детальна техніка</div></div>
+          </a>
+          <div class="trow"><strong>Техніка:</strong> ${ex.tech}</div>
+          ${ex.tip?`<div class="tip">→ ${ex.tip}</div>`:''}
+          ${logHTML(active,i)}
+          <div class="alt-s">
+            <div class="alt-t">Альтернативи</div>
+            ${ex.alts.map(a=>`
+              <div class="ai">
+                <div class="ai-n">${a.name}</div>
+                <div class="ai-r">${a.reason}</div>
+                <a href="${a.video}" target="_blank" rel="noopener" class="ai-v">Відео</a>
+              </div>`).join('')}
+          </div>
+        </div></div>
+      </div>`;
+    }).join('')}
+    <div class="rules">
+      <div class="rt">ТРИ ПРАВИЛА <span>/</span></div>
+      <div class="ru"><div class="rn">01</div><div><strong>Прогресія.</strong> Записуй ваги. Щотижня +2.5 кг або +1 повтор.</div></div>
+      <div class="ru"><div class="rn">02</div><div><strong>Пріоритет.</strong> Зелена смужка = ключова вправа. Роби першою.</div></div>
+      <div class="ru"><div class="rn">03</div><div><strong>Харчування.</strong> Дефіцит 400-500 ккал/день, білок 175+ г/день.</div></div>
+    </div>
+    <div class="tgts">
+      <div class="tg"><div class="tg-l">ВАГА</div><div class="tg-v">82-83</div><div class="tg-c">зараз 88.3</div></div>
+      <div class="tg"><div class="tg-l">ТАЛІЯ</div><div class="tg-v">87-89</div><div class="tg-c">зараз 95</div></div>
+      <div class="tg"><div class="tg-l">ГРУДИ</div><div class="tg-v">106+</div><div class="tg-c">зараз 101</div></div>
+    </div>`;
+}
+
+function sw(k){active=k;renderTabs();renderPg();window.scrollTo({top:0,behavior:'smooth'});}
+function chk(i,e){
+  e.stopPropagation();
+  const d=gDone(active);
+  if(d.has(i))d.delete(i);else d.add(i);
+  sDone(active,d);renderTabs();renderPg();
+}
+function toggle(i,e){
+  if(e.target.classList.contains('ck')||e.target.closest('.log-s'))return;
+  const el=document.querySelector(`.ex[data-i="${i}"]`);
+  if(el)el.classList.toggle('open');
+}
+function resetDay(){
+  if(confirm('Скинути позначки для '+W[active].name+'?')){sDone(active,new Set());renderTabs();renderPg();}
+}
+
+// QR
+let qrDone=false;
+function openQR(){
+  document.getElementById('qrm').classList.add('on');
+  if(!qrDone){
+    const c=document.getElementById('qrc');c.innerHTML='';
+    new QRCode(c,{text:window.location.href,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    qrDone=true;
+  }
+}
+function closeQR(){document.getElementById('qrm').classList.remove('on');}
+
+// PWA
+let dp=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;document.getElementById('inst-btn').style.display='block';});
+function installApp(){if(dp){dp.prompt();dp.userChoice.then(()=>{dp=null;document.getElementById('inst-btn').style.display='none';});}}
+window.addEventListener('appinstalled',()=>{document.getElementById('inst-btn').style.display='none';});
+
+const manifest={name:'Тренування Upper/Lower',short_name:'Gym',start_url:'./',display:'standalone',background_color:'#0a0a0a',theme_color:'#0a0a0a',icons:[{src:'https://via.placeholder.com/192x192/d4ff3a/000000?text=G',sizes:'192x192',type:'image/png'}]};
+document.getElementById('manifest-ph').href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
+
+if('serviceWorker' in navigator){
+  const sw=`const C='gym-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('/'))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+
+renderTabs();
+renderPg();
+</script>
+</body>
+</html>
