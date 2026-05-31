@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Gym">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" id="manifest-placeholder">
+<title>Тренування</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0a0a0a; --bg-card: #141414; --bg-elevated: #1c1c1c;
+    --border: #2a2a2a; --text: #f5f5f0; --text-dim: #888; --text-faint: #555;
+    --accent: #d4ff3a; --accent-dim: #8aa820; --done: #3a3a3a; --done-text: #555;
+    --alt: #4a9eff; --log: #ff9f43;
+  }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Manrope', sans-serif; overflow-x: hidden; min-height: 100vh; }
+  body { background: radial-gradient(ellipse at top, rgba(212,255,58,0.04) 0%, transparent 50%), var(--bg); padding-bottom: 80px; }
+
+  .header { padding: 20px 20px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,10,0.96); backdrop-filter: blur(20px); z-index: 100; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 0.02em; line-height: 1; }
+  .title .accent { color: var(--accent); }
+  .header-btns { display: flex; gap: 8px; }
+  .hdr-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-dim); padding: 7px 11px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; letter-spacing: 0.07em; transition: all 0.2s; white-space: nowrap; }
+  .hdr-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .schedule { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 14px 20px; background: var(--bg); position: sticky; top: 81px; z-index: 99; border-bottom: 1px solid var(--border); }
+  .tab { background: var(--bg-card); border: 1px solid var(--border); padding: 12px 4px; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .tab-day { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-faint); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 3px; }
+  .tab-name { font-family: 'Bebas Neue', sans-serif; font-size: 17px; color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); }
+  .tab.active .tab-day, .tab.active .tab-name { color: #0a0a0a; }
+  .tab-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s; }
+
+  .content { padding: 16px; max-width: 600px; margin: 0 auto; }
+  .workout-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .workout-title { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 0.9; }
+  .workout-title .num { color: var(--accent); font-size: 24px; display: block; margin-bottom: -4px; }
+  .workout-stats { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .workout-stats .count { font-size: 22px; color: var(--accent); display: block; font-weight: 700; }
+  .focus-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); background: rgba(212,255,58,0.1); border: 1px solid var(--accent-dim); padding: 3px 9px; border-radius: 4px; text-transform: uppercase; margin-bottom: 14px; }
+  .hint-bar { background: rgba(212,255,58,0.06); border: 1px solid rgba(212,255,58,0.2); padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono', monospace; text-align: center; }
+
+  .exercise { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: all 0.25s; animation: slideIn 0.3s ease backwards; }
+  .exercise.done { background: var(--bg); border-color: var(--done); opacity: 0.5; }
+  .exercise.done .ex-name { text-decoration: line-through; color: var(--done-text); }
+  .exercise.priority { border-left: 3px solid var(--accent); }
+  .exercise:nth-child(2){animation-delay:.04s}.exercise:nth-child(3){animation-delay:.08s}.exercise:nth-child(4){animation-delay:.12s}.exercise:nth-child(5){animation-delay:.16s}.exercise:nth-child(6){animation-delay:.2s}.exercise:nth-child(7){animation-delay:.24s}.exercise:nth-child(8){animation-delay:.28s}
+
+  .ex-main { display: flex; align-items: center; padding: 14px; cursor: pointer; gap: 12px; }
+  .ex-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--text-faint); width: 22px; flex-shrink: 0; text-align: center; }
+  .exercise.done .ex-num { color: var(--done-text); }
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-size: 14px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; }
+  .ex-row2 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ex-sets { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); font-weight: 700; }
+  .ex-last { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--log); background: rgba(255,159,67,0.1); padding: 1px 6px; border-radius: 3px; }
+  .alt-badge { background: rgba(74,158,255,0.12); color: var(--alt); padding: 1px 5px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 9px; }
+  .ex-check { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: var(--bg-elevated); }
+  .exercise.done .ex-check { background: var(--accent); border-color: var(--accent); }
+  .ex-check::after { content:''; width:12px; height:7px; border-left:2px solid #0a0a0a; border-bottom:2px solid #0a0a0a; transform:rotate(-45deg) translate(2px,-2px); opacity:0; transition:opacity 0.2s; }
+  .exercise.done .ex-check::after { opacity:1; }
+
+  .ex-details { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .exercise.expanded .ex-details { max-height: 2000px; }
+  .ex-details-inner { padding: 12px 14px 14px 48px; border-top: 1px solid var(--border); }
+
+  .video-btn { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg,#ff0000,#cc0000); color:#fff; text-decoration:none; padding:11px 14px; border-radius:8px; font-weight:600; font-size:13px; margin-bottom:12px; box-shadow:0 4px 12px rgba(255,0,0,0.2); }
+  .video-btn-icon { width:30px; height:20px; background:#fff; border-radius:3px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .video-btn-icon::after { content:''; width:0; height:0; border-left:8px solid #ff0000; border-top:5px solid transparent; border-bottom:5px solid transparent; margin-left:2px; }
+  .video-btn-text { flex:1; line-height:1.2; }
+  .video-btn-sub { font-size:9px; opacity:.8; font-family:'JetBrains Mono',monospace; margin-top:2px; text-transform:uppercase; }
+
+  .ex-detail-row { font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:8px; }
+  .ex-detail-row strong { color:var(--text); font-weight:600; }
+  .ex-tip { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); background:rgba(212,255,58,0.06); padding:7px 10px; border-radius:6px; margin-bottom:14px; line-height:1.5; }
+
+  .log-section { margin-bottom: 14px; }
+  .log-title { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--log); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .log-title::before { content:'📋'; font-size:12px; }
+  .log-input-row { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:end; }
+  .log-field { display:flex; flex-direction:column; gap:4px; }
+  .log-label { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-faint); letter-spacing:0.1em; text-transform:uppercase; }
+  .log-input { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:14px; width:100%; -webkit-appearance:none; outline:none; text-align:center; }
+  .log-input:focus { border-color:var(--log); }
+  .log-save { background:var(--log); color:#000; border:none; padding:8px 14px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; height:36px; white-space:nowrap; }
+  .log-history { background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .log-history-header { display:grid; grid-template-columns:70px 1fr 1fr 1fr; padding:6px 10px; border-bottom:1px solid var(--border); }
+  .log-history-header span { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-faint); letter-spacing:0.1em; text-transform:uppercase; text-align:center; }
+  .log-history-header span:first-child { text-align:left; }
+  .log-row { display:grid; grid-template-columns:70px 1fr 1fr 1fr; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .log-row:last-child { border-bottom:none; }
+  .log-date { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-faint); }
+  .log-val { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); text-align:center; }
+  .log-val.best { color:var(--accent); font-weight:700; }
+  .log-val.up { color:#2ecc71; }
+  .log-val.down { color:#e74c3c; }
+  .log-empty { padding:12px 10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); text-align:center; }
+
+  .alt-section { padding-top:12px; border-top:1px dashed var(--border); }
+  .alt-title { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--alt); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .alt-title::before { content:'⇄'; font-size:14px; }
+  .alt-item { background:var(--bg-elevated); border:1px solid var(--border); border-left:2px solid var(--alt); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .alt-item:last-child { margin-bottom:0; }
+  .alt-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .alt-reason { font-size:11px; color:var(--text-dim); line-height:1.4; margin-bottom:7px; }
+  .alt-video { display:inline-flex; align-items:center; gap:6px; background:rgba(255,0,0,0.12); color:#ff5555; text-decoration:none; padding:4px 10px; border-radius:5px; font-size:11px; font-family:'JetBrains Mono',monospace; }
+  .alt-video::before { content:'▶'; font-size:9px; }
+
+  .rules { margin-top:28px; padding:18px; background:var(--bg-card); border-radius:12px; border:1px solid var(--border); }
+  .rules-title { font-family:'Bebas Neue',sans-serif; font-size:22px; margin-bottom:12px; }
+  .rules-title .accent { color:var(--accent); }
+  .rule { display:flex; gap:10px; margin-bottom:10px; font-size:13px; line-height:1.5; color:var(--text-dim); }
+  .rule:last-child { margin-bottom:0; }
+  .rule-num { font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:700; flex-shrink:0; font-size:11px; padding-top:1px; }
+  .rule strong { color:var(--text); }
+
+  .targets { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:20px 0; }
+  .target { background:var(--bg-card); border:1px solid var(--border); padding:10px 8px; border-radius:8px; text-align:center; }
+  .target-label { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-faint); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+  .target-value { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--accent); }
+  .target-current { font-size:9px; color:var(--text-dim); margin-top:2px; }
+
+  .reset-btn { position:fixed; bottom:20px; right:20px; background:var(--bg-card); border:1px solid var(--border); color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:11px; padding:10px 14px; border-radius:8px; cursor:pointer; letter-spacing:0.1em; text-transform:uppercase; z-index:50; }
+  .reset-btn:active { background:var(--accent); color:#0a0a0a; border-color:var(--accent); }
+
+  /* INSTALL BANNER */
+  .install-banner { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--accent-dim); padding:14px 20px; z-index:150; align-items:center; gap:12px; }
+  .install-banner.show { display:flex; }
+  .install-text { flex:1; font-size:13px; line-height:1.4; }
+  .install-text strong { color:var(--accent); display:block; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.05em; }
+  .install-btn { background:var(--accent); color:#000; border:none; padding:10px 16px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .install-close { background:none; border:none; color:var(--text-faint); font-size:20px; cursor:pointer; padding:4px; }
+
+  /* QR MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; max-width:320px; width:100%; text-align:center; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:26px; margin-bottom:4px; }
+  .modal-title .accent { color:var(--accent); }
+  .modal-sub { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); margin-bottom:18px; }
+  #qr-container { display:flex; justify-content:center; margin-bottom:16px; }
+  #qr-container canvas, #qr-container img { border-radius:8px; border:4px solid #fff; }
+  .modal-steps { background:var(--bg-elevated); border-radius:8px; padding:12px 14px; margin-bottom:16px; text-align:left; }
+  .modal-step { font-size:12px; color:var(--text-dim); padding:3px 0; line-height:1.5; }
+  .modal-step strong { color:var(--text); }
+  .modal-close { background:var(--accent); color:#000; border:none; width:100%; padding:12px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; cursor:pointer; }
+
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="title">UPPER<span class="accent">/</span>LOWER</div>
+    <div class="header-btns">
+      <button class="hdr-btn" id="install-btn" style="display:none" onclick="installApp()">+ ДОДАТОК</button>
+      <button class="hdr-btn" onclick="openQR()">QR</button>
+    </div>
+  </div>
+  <div class="schedule">ПН · ВТ · ЧТ · ПТ — кожна група 2× на тиждень</div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="content" id="content"></div>
+<button class="reset-btn" onclick="resetDay()">Скинути день</button>
+
+<!-- iOS install banner -->
+<div class="install-banner" id="ios-banner">
+  <div class="install-text">
+    <strong>ЗБЕРЕГТИ ЯК ДОДАТОК</strong>
+    Натисни <b>Поділитися</b> → "На початковий екран"
+  </div>
+  <button class="install-close" onclick="document.getElementById('ios-banner').classList.remove('show')">×</button>
+</div>
+
+<!-- QR Modal -->
+<div class="modal-overlay" id="qr-modal" onclick="closeQROutside(event)">
+  <div class="modal">
+    <div class="modal-title">ВІДКРИТИ <span class="accent">НА ТЕЛЕФОНІ</span></div>
+    <div class="modal-sub">СКАНУЙ КАМЕРОЮ</div>
+    <div id="qr-container"></div>
+    <div class="modal-steps">
+      <div class="modal-step"><strong>iPhone Safari:</strong> Поділитися → "На початковий екран"</div>
+      <div class="modal-step"><strong>Android Chrome:</strong> Меню ⋮ → "Додати на головний екран"</div>
+    </div>
+    <button class="modal-close" onclick="closeQR()">ЗАКРИТИ</button>
+  </div>
+</div>
+
+<script>
+const yt = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+
+const workouts = {
+  upperA: {
+    day:'ПН', num:'01', name:'UPPER A', focus:'ГРУДИ · СПИНА · ПЛЕЧІ',
+    exercises:[
+      { name:'Жим штанги на похилій лаві 30°', sets:'4×6-8', priority:true, video:yt('incline barbell bench press technique'), tech:'Лава 30°, опускати до верху грудей, лікті 45° від тіла.', tip:'Головна вправа на верх грудей', alts:[{name:'Жим гантелей на похилій лаві',reason:'Штанга зайнята. Більша амплітуда.',video:yt('incline dumbbell press')},{name:'Жим у Сміті на похилій лаві',reason:'Без партнера для страховки.',video:yt('smith machine incline press')}]},
+      { name:'Підтягування широким хватом', sets:'4×8-10', priority:true, video:yt('wide grip pull ups'), tech:'Менше 8 повторів — тяга верхнього блока широким хватом.', tip:'База для широкої спини', alts:[{name:'Тяга верхнього блока широким хватом',reason:'Менше 8 підтягувань.',video:yt('wide grip lat pulldown')},{name:'Підтягування з гумкою',reason:'Перехідний варіант.',video:yt('assisted pull ups band')}]},
+      { name:'Жим гантелей сидячи', sets:'3×8-10', video:yt('seated dumbbell shoulder press'), tech:'Спина до лави, опускати до рівня вух.', tip:'Без інерції корпусу', alts:[{name:'Жим у тренажері (Shoulder press)',reason:'Немає вільної лави.',video:yt('machine shoulder press')},{name:'Армійський жим стоячи',reason:'Більше включає кор.',video:yt('overhead press standing')}]},
+      { name:'Тяга штанги в нахилі', sets:'3×8-10', video:yt('barbell bent over row'), tech:'Корпус 45°, тягни до живота, зводь лопатки.', tip:'Спина пряма > вага', alts:[{name:'Тяга гантелі однією рукою',reason:'Болить поперек.',video:yt('one arm dumbbell row')},{name:'Тяга з упором у груди',reason:'Штанга зайнята.',video:yt('chest supported row')}]},
+      { name:'Розведення гантелей стоячи', sets:'4×12-15', priority:true, video:yt('dumbbell lateral raises'), tech:'Лікті трохи зігнуті, до рівня плечей.', tip:'Критично для ширини. Чиста техніка', alts:[{name:'Махи на блоці однією рукою',reason:'Постійна напруга.',video:yt('cable lateral raise')},{name:'Тренажер Lateral Raise',reason:'Фіксована траєкторія.',video:yt('lateral raise machine')}]},
+      { name:'Біцепс зі штангою', sets:'3×8-10', video:yt('barbell biceps curl'), tech:'Лікті притиснуті до боків, без розгойдування.', tip:'2 сек вниз', alts:[{name:'Згинання з гантелями',reason:'Штанга зайнята.',video:yt('dumbbell biceps curl')},{name:'Згинання на блоці',reason:'Постійна напруга.',video:yt('cable biceps curl')}]},
+      { name:'Французький жим лежачи', sets:'3×10', video:yt('skull crushers triceps'), tech:'EZ-штанга, до лоба, лікті фіксовані.', tip:'', alts:[{name:'Розгинання на блоці канатом',reason:'Болять лікті.',video:yt('triceps rope pushdown')},{name:'Французький жим з гантелями',reason:'Альтернативний кут.',video:yt('overhead dumbbell triceps')}]}
+    ]
+  },
+  lowerA: {
+    day:'ВТ', num:'02', name:'LOWER A', focus:'НОГИ · ПРЕС',
+    exercises:[
+      { name:'Присідання зі штангою', sets:'4×6-8', priority:true, video:yt('barbell back squat technique'), tech:'Штанга на трапеції, ноги на ширині плечей, до паралелі.', tip:'Глибина > вага', alts:[{name:'Присідання у Сміті',reason:'Стійка зайнята.',video:yt('smith machine squat')},{name:'Goblet squat з гантеллю',reason:'Болить плече.',video:yt('goblet squat')}]},
+      { name:'Румунська тяга', sets:'3×8-10', priority:true, video:yt('romanian deadlift'), tech:'Ноги майже прямі, тазом назад, штанга вздовж ніг.', tip:'Задня поверхня і сідниці', alts:[{name:'Румунська тяга з гантелями',reason:'Штанга зайнята.',video:yt('romanian deadlift dumbbells')},{name:'У Сміті на прямих ногах',reason:'Безпечніше для спини.',video:yt('smith machine rdl')}]},
+      { name:'Жим ногами', sets:'3×10-12', video:yt('leg press technique'), tech:'Ноги на ширині плечей по центру.', tip:'Не випрямляй коліна', alts:[{name:'Гак-присід',reason:'Жим зайнятий.',video:yt('hack squat machine')},{name:'Болгарські випади',reason:'Без тренажера.',video:yt('bulgarian split squat')}]},
+      { name:'Випади з гантелями', sets:'3×10 на ногу', video:yt('dumbbell walking lunges'), tech:'Крок вперед, заднє коліно майже до підлоги.', tip:'', alts:[{name:'Випади у Сміті',reason:'Мало місця.',video:yt('smith machine reverse lunge')},{name:'Зворотні випади',reason:'Менше навантаження на коліна.',video:yt('reverse lunges')}]},
+      { name:'Підйом на носки', sets:'4×12-15', video:yt('standing calf raises'), tech:'У тренажері або з гантелями, повна амплітуда.', tip:'', alts:[{name:'Підйом на носки сидячи',reason:'Інший пучок.',video:yt('seated calf raises')},{name:'На жимі ногами',reason:'Немає окремого тренажера.',video:yt('leg press calf raise')}]},
+      { name:'Планка', sets:'3×60 сек', video:yt('plank exercise form'), tech:'Тіло пряма лінія, таз не провисає.', tip:'', alts:[{name:'Бокова планка',reason:'Більше косі м\'язи.',video:yt('side plank')},{name:'Hollow body hold',reason:'Планка вже легка.',video:yt('hollow body hold')}]},
+      { name:'Скручування на блоці', sets:'3×15', video:yt('cable crunches'), tech:'На колінах, ліктями до стегон, округляй спину.', tip:'Опір > витривалість', alts:[{name:'Підйоми ніг у висі',reason:'Блок зайнятий.',video:yt('hanging leg raises')},{name:'Тренажер для пресу',reason:'Регульована вага.',video:yt('ab crunch machine')}]}
+    ]
+  },
+  upperB: {
+    day:'ЧТ', num:'03', name:'UPPER B', focus:'СПИНА В ШИРИНУ · ЗАДНЯ ДЕЛЬТА',
+    exercises:[
+      { name:'Жим гантелей на горизонтальній лаві', sets:'4×8-10', priority:true, video:yt('flat dumbbell bench press'), tech:'Більша амплітуда ніж штанга. Опускати на рівні грудей.', tip:'', alts:[{name:'Жим штанги лежачи',reason:'Немає важких гантелей.',video:yt('barbell bench press')},{name:'Chest press machine',reason:'Лава зайнята.',video:yt('chest press machine')}]},
+      { name:'Тяга T-грифа', sets:'4×8-10', priority:true, video:yt('t bar row'), tech:'Спина пряма, до живота, зводь лопатки.', tip:'Товщина спини', alts:[{name:'Горизонтальна тяга на блоці',reason:'T-гриф зайнятий.',video:yt('seated cable row')},{name:'Hammer Strength row',reason:'Без навантаження на поперек.',video:yt('hammer strength row')}]},
+      { name:'Жим Арнольда', sets:'3×10', video:yt('arnold press'), tech:'Старт долонями до себе, при підйомі розвертай.', tip:'Всі три пучки дельти', alts:[{name:'Жим гантелей сидячи',reason:'Незручний поворот.',video:yt('seated dumbbell press')},{name:'Жим у тренажері',reason:'Простіша техніка.',video:yt('shoulder press machine')}]},
+      { name:'Тяга верхнього блока вузьким хватом', sets:'3×10', video:yt('close grip lat pulldown'), tech:'Паралельний хват, до грудей, лікті вниз і назад.', tip:'', alts:[{name:'Підтягування зворотним хватом',reason:'Без тренажера.',video:yt('chin ups')},{name:'Тяга зворотним хватом',reason:'Більше біцепс.',video:yt('underhand lat pulldown')}]},
+      { name:'Махи в нахилі (задня дельта)', sets:'4×12-15', priority:true, video:yt('bent over rear delt fly'), tech:'Корпус паралельно підлозі, розводь у сторони.', tip:'КРИТИЧНО для постави', alts:[{name:'Reverse pec deck',reason:'Краща ізоляція.',video:yt('reverse pec deck')},{name:'Face pull на блоці',reason:'Також ротатори плеча.',video:yt('face pull cable')}]},
+      { name:'Молоткові згинання', sets:'3×10', video:yt('hammer curls'), tech:'Паралельний хват, лікті фіксовані.', tip:'', alts:[{name:'Канат на нижньому блоці',reason:'Постійна напруга.',video:yt('cable hammer curls')},{name:'Лава Скотта',reason:'Акцент пік біцепса.',video:yt('preacher curl')}]},
+      { name:'Розгинання на блоці канатом', sets:'3×12', video:yt('triceps rope pushdown'), tech:'Канатна рукоять, у нижній точці розводь руки.', tip:'', alts:[{name:'Пряма рукоять',reason:'Канат зайнятий.',video:yt('triceps pushdown bar')},{name:'Віджимання на брусах',reason:'Більше базове навантаження.',video:yt('dips triceps')}]}
+    ]
+  },
+  lowerB: {
+    day:'ПТ', num:'04', name:'LOWER B', focus:'НОГИ · ПОПЕРЕК · ПРЕС',
+    exercises:[
+      { name:'Станова тяга', sets:'3×5', priority:true, video:yt('conventional deadlift technique'), tech:'Спина пряма, штанга вздовж ніг, плечі назад.', tip:'Техніка > вага', alts:[{name:'Сумо-тяга',reason:'Погана рухливість стегна.',video:yt('sumo deadlift')},{name:'Trap bar deadlift',reason:'Найбезпечніший варіант.',video:yt('trap bar deadlift')}]},
+      { name:'Болгарські випади', sets:'3×10 на ногу', video:yt('bulgarian split squat'), tech:'Задня нога на лаві, вертикально вниз.', tip:'', alts:[{name:'Випади у Сміті',reason:'Складно тримати рівновагу.',video:yt('smith machine split squat')},{name:'Випади з гантелями',reason:'Лава зайнята.',video:yt('dumbbell lunges')}]},
+      { name:'Згинання ніг лежачи', sets:'3×12', video:yt('lying leg curl'), tech:'Повна амплітуда, контроль на опусканні.', tip:'', alts:[{name:'Згинання ніг сидячи',reason:'Тренажер лежачи зайнятий.',video:yt('seated leg curl')},{name:'Nordic curl',reason:'Без тренажера.',video:yt('nordic hamstring curl')}]},
+      { name:'Гак-присід', sets:'3×12', video:yt('hack squat machine'), tech:'Ноги вузько по центру — акцент квадрицепс.', tip:'', alts:[{name:'Жим ногами вузька постановка',reason:'Машина зайнята.',video:yt('leg press narrow quads')},{name:'Розгинання ніг',reason:'Чиста ізоляція квадрицепса.',video:yt('leg extension machine')}]},
+      { name:'Гіперекстензія', sets:'3×15', video:yt('back extension hyperextension'), tech:'З блином 5-10 кг, не перерозгинай поперек.', tip:'Важливо для постави', alts:[{name:'Good morning зі штангою',reason:'Немає тренажера.',video:yt('good morning barbell')},{name:'Сідничний міст',reason:'Більше акцент сідниці.',video:yt('barbell hip thrust')}]},
+      { name:'Колесо для пресу', sets:'3×10-15', video:yt('ab wheel rollout'), tech:'З колін, не прогинай поперек.', tip:'Якщо складно — заміни', alts:[{name:'Підйоми ніг у висі',reason:'Немає колеса.',video:yt('hanging leg raises')},{name:'Скручування на блоці',reason:'Більше контролю.',video:yt('cable crunches')}]}
+    ]
+  }
+};
+
+const order = ['upperA','lowerA','upperB','lowerB'];
+let activeKey = 'upperA';
+
+function getDoneSet(k) { try { const r=localStorage.getItem('done_'+k); return r?new Set(JSON.parse(r)):new Set(); } catch{return new Set();} }
+function saveDoneSet(k,s) { try{localStorage.setItem('done_'+k,JSON.stringify([...s]));}catch{} }
+function getLogs(wk,ei) { try{const r=localStorage.getItem(`log_${wk}_${ei}`);return r?JSON.parse(r):[];}catch{return[];} }
+function saveLogs(wk,ei,logs) { try{localStorage.setItem(`log_${wk}_${ei}`,JSON.stringify(logs));}catch{} }
+function getLastLog(wk,ei) { const l=getLogs(wk,ei); return l.length?l[l.length-1]:null; }
+
+function saveLog(wk, ei) {
+  const kg = document.getElementById(`kg_${ei}`)?.value;
+  const reps = document.getElementById(`reps_${ei}`)?.value;
+  if (!kg && !reps) return;
+  const logs = getLogs(wk, ei);
+  const d = new Date();
+  logs.push({ date: d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit'}), kg: kg||'-', reps: reps||'-' });
+  if (logs.length > 10) logs.shift();
+  saveLogs(wk, ei, logs);
+  document.getElementById(`kg_${ei}`).value = '';
+  document.getElementById(`reps_${ei}`).value = '';
+  renderContent();
+  setTimeout(() => { const el=document.querySelector(`.exercise[data-idx="${ei}"]`); if(el) el.classList.add('expanded'); }, 50);
+}
+
+function buildLogHTML(wk, ei) {
+  const logs = getLogs(wk, ei);
+  let hist = logs.length ? `
+    <div class="log-history">
+      <div class="log-history-header"><span>ДАТА</span><span>КГ</span><span>ПОВТ</span><span>±</span></div>
+      ${logs.slice().reverse().map((l,i,arr) => {
+        const prev = i < arr.length-1 ? parseFloat(arr[i+1].kg) : null;
+        const cur = parseFloat(l.kg);
+        const best = Math.max(...logs.map(x=>parseFloat(x.kg)||0));
+        const isBest = !isNaN(cur) && cur===best;
+        let delta = '<span class="log-val">—</span>';
+        if (prev && !isNaN(cur)) {
+          const d = cur-prev;
+          delta = d>0 ? `<span class="log-val up">+${d}</span>` : d<0 ? `<span class="log-val down">${d}</span>` : '<span class="log-val">0</span>';
+        }
+        return `<div class="log-row"><span class="log-date">${l.date}</span><span class="log-val ${isBest?'best':''}">${l.kg}</span><span class="log-val">${l.reps}</span>${delta}</div>`;
+      }).join('')}
+    </div>` : `<div class="log-history"><div class="log-empty">Ще немає записів</div></div>`;
+
+  return `<div class="log-section">
+    <div class="log-title">Журнал тренування</div>
+    <div class="log-input-row">
+      <div class="log-field"><span class="log-label">КГ</span><input type="number" class="log-input" id="kg_${ei}" placeholder="0" inputmode="decimal" step="0.5"></div>
+      <div class="log-field"><span class="log-label">ПОВТОРЕНЬ</span><input type="number" class="log-input" id="reps_${ei}" placeholder="0" inputmode="numeric"></div>
+      <button class="log-save" onclick="saveLog('${wk}',${ei})">ЗБЕРЕГТИ</button>
+    </div>${hist}</div>`;
+}
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = order.map(k => {
+    const w=workouts[k], done=getDoneSet(k), pct=w.exercises.length?(done.size/w.exercises.length)*100:0, isA=k===activeKey;
+    return `<div class="tab ${isA?'active':''}" onclick="switchTab('${k}')"><div class="tab-day">${w.day}</div><div class="tab-name">${w.num}</div>${!isA?`<div class="tab-progress" style="width:${pct}%"></div>`:''}</div>`;
+  }).join('');
+}
+
+function renderContent() {
+  const w=workouts[activeKey], done=getDoneSet(activeKey);
+  document.getElementById('content').innerHTML = `
+    <div class="workout-header">
+      <div class="workout-title"><span class="num">${w.day} · ${w.num}</span>${w.name}</div>
+      <div class="workout-stats"><span class="count">${done.size}/${w.exercises.length}</span>ВПРАВ</div>
+    </div>
+    <div class="focus-tag">${w.focus}</div>
+    <div class="hint-bar">→ ТАПНИ ВПРАВУ — ВІДЕО · ЖУРНАЛ · АЛЬТЕРНАТИВИ</div>
+    ${w.exercises.map((ex,i) => {
+      const last=getLastLog(activeKey,i);
+      const lastTag=last?`<span class="ex-last">↑ ${last.kg}кг × ${last.reps}</span>`:'';
+      return `<div class="exercise ${done.has(i)?'done':''} ${ex.priority?'priority':''}" data-idx="${i}">
+        <div class="ex-main" onclick="toggleExpand(${i},event)">
+          <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="ex-info">
+            <div class="ex-name">${ex.name}</div>
+            <div class="ex-row2"><span class="ex-sets">${ex.sets}</span>${lastTag}<span class="alt-badge">${ex.alts.length} АЛЬТ</span></div>
+          </div>
+          <div class="ex-check" onclick="toggleDone(${i},event)"></div>
+        </div>
+        <div class="ex-details"><div class="ex-details-inner">
+          <a href="${ex.video}" target="_blank" rel="noopener" class="video-btn">
+            <div class="video-btn-icon"></div>
+            <div class="video-btn-text">Подивитись техніку<div class="video-btn-sub">YouTube · відео</div></div>
+          </a>
+          <div class="ex-detail-row"><strong>Техніка:</strong> ${ex.tech}</div>
+          ${ex.tip?`<div class="ex-tip">→ ${ex.tip}</div>`:''}
+          ${buildLogHTML(activeKey,i)}
+          <div class="alt-section">
+            <div class="alt-title">Альтернативи</div>
+            ${ex.alts.map(a=>`<div class="alt-item"><div class="alt-name">${a.name}</div><div class="alt-reason">${a.reason}</div><a href="${a.video}" target="_blank" rel="noopener" class="alt-video">Відео</a></div>`).join('')}
+          </div>
+        </div></div>
+      </div>`;
+    }).join('')}
+    <div class="rules">
+      <div class="rules-title">ТРИ ПРАВИЛА <span class="accent">/</span></div>
+      <div class="rule"><div class="rule-num">01</div><div><strong>Прогресія.</strong> Записуй ваги. Щотижня +2.5 кг або +1 повтор.</div></div>
+      <div class="rule"><div class="rule-num">02</div><div><strong>Пріоритет.</strong> Зелена смужка = ключова вправа. Роби першою.</div></div>
+      <div class="rule"><div class="rule-num">03</div><div><strong>Харчування.</strong> Дефіцит 400-500 ккал/день, білок 175+ г/день.</div></div>
+    </div>
+    <div class="targets">
+      <div class="target"><div class="target-label">ВАГА</div><div class="target-value">82-83</div><div class="target-current">зараз 88.3</div></div>
+      <div class="target"><div class="target-label">ТАЛІЯ</div><div class="target-value">87-89</div><div class="target-current">зараз 95</div></div>
+      <div class="target"><div class="target-label">ГРУДИ</div><div class="target-value">106+</div><div class="target-current">зараз 101</div></div>
+    </div>`;
+}
+
+function switchTab(k) { activeKey=k; renderTabs(); renderContent(); window.scrollTo({top:0,behavior:'smooth'}); }
+function toggleDone(idx,event) {
+  event.stopPropagation();
+  const done=getDoneSet(activeKey);
+  if(done.has(idx)) done.delete(idx); else done.add(idx);
+  saveDoneSet(activeKey,done); renderTabs(); renderContent();
+}
+function toggleExpand(idx,event) {
+  if(event.target.classList.contains('ex-check')||event.target.closest('.log-section')) return;
+  const el=document.querySelector(`.exercise[data-idx="${idx}"]`);
+  if(el) el.classList.toggle('expanded');
+}
+function resetDay() {
+  if(confirm('Скинути позначки для '+workouts[activeKey].name+'?')) { saveDoneSet(activeKey,new Set()); renderTabs(); renderContent(); }
+}
+
+// QR
+let qrDone=false;
+function openQR() {
+  document.getElementById('qr-modal').classList.add('open');
+  if(!qrDone) {
+    const c=document.getElementById('qr-container'); c.innerHTML='';
+    new QRCode(c,{text:window.location.href,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+    qrDone=true;
+  }
+}
+function closeQR() { document.getElementById('qr-modal').classList.remove('open'); }
+function closeQROutside(e) { if(e.target===document.getElementById('qr-modal')) closeQR(); }
+
+// PWA install
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('install-btn').style.display='block';
+});
+function installApp() {
+  if(deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; document.getElementById('install-btn').style.display='none'; }); }
+}
+window.addEventListener('appinstalled', () => { document.getElementById('install-btn').style.display='none'; });
+
+// iOS banner — show once
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+if (isIOS && !localStorage.getItem('ios-banner-shown')) {
+  setTimeout(()=>{ document.getElementById('ios-banner').classList.add('show'); localStorage.setItem('ios-banner-shown','1'); }, 2000);
+}
+
+// PWA manifest inline
+const manifest = {
+  name:'Тренування Upper/Lower', short_name:'Gym', start_url:'./',
+  display:'standalone', background_color:'#0a0a0a', theme_color:'#0a0a0a',
+  icons:[{src:'https://via.placeholder.com/192x192/d4ff3a/000000?text=G',sizes:'192x192',type:'image/png'},{src:'https://via.placeholder.com/512x512/d4ff3a/000000?text=G',sizes:'512x512',type:'image/png'}]
+};
+const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('manifest-placeholder').href=URL.createObjectURL(blob);
+
+// Service Worker for offline
+if('serviceWorker' in navigator) {
+  const sw=`const C='gym-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('/'))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const swBlob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+
+renderTabs();
+renderContent();
+</script>
+</body>
+</html>
